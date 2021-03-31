@@ -30,6 +30,8 @@ def print_board():
 def check_dic_consistance(dic):
     sum = 0
     for key in dic:
+        if len(dic[key]) == 3:
+            return False
         sum += len(dic[key])
     return sum != 1
 
@@ -58,6 +60,16 @@ def update_new_board_from_str(string, new_board):
 
 def from_diff_to_move(diff, promotion=None):
     key = list(diff.keys())[0]
+    # hashmap = []
+    # len = len(diff[key])
+    # i = 0
+    # while i < len:
+    #     if diff[key][i] in hashmap:
+    #         diff[key].pop(i)
+    #         i -= 1
+    #         len -= 1
+    #     hashmap.append(diff[key][i])
+    #     i += 1
     res = ""
     res += board_map[diff[key][0][1]]
     res += str(diff[key][0][0]+1)
@@ -65,8 +77,6 @@ def from_diff_to_move(diff, promotion=None):
     res += str(diff[key][1][0]+1)
     if promotion:
         res += promotion
-    if res[0] == res[2] and res[1] == res[3]:
-        print(diff)
     return res
 
 
@@ -245,7 +255,7 @@ def lunch_game(driver):
     return driver, is_white
 
 
-stockfish = Stockfish("stockfish_x86-64-bmi2.exe", parameters={"Threads": 8, "Ponder": "true", "Skill Level": 6, "Hash": 512})
+stockfish = Stockfish("stockfish_x86-64-bmi2.exe", parameters={"Threads": 8, "Ponder": "true", "Skill Level": 7, "Hash": 512})
 stockfish.set_depth(20)
 driver = create_driver("https://www.chess.com/login_and_go", "en")
 driver = login(driver)
