@@ -34,6 +34,14 @@ def check_dic_consistance(dic):
     return sum != 1
 
 
+def check_dic_not_dupplicate_move(dic):
+    for key in dic:
+        if len(dic[key]) == 2:
+            if dic[key][0] == dic[key][1]:
+                return False
+    return True
+
+
 def update_new_board_from_str(string, new_board):
     last_two = string[len(string)-2:len(string)]
     if last_two.isdigit():
@@ -57,6 +65,8 @@ def from_diff_to_move(diff, promotion=None):
     res += str(diff[key][1][0]+1)
     if promotion:
         res += promotion
+    if res[0] == res[2] and res[1] == res[3]:
+        print(diff)
     return res
 
 
@@ -109,7 +119,8 @@ def actualiser_board(driver):
 def get_move_from_opponent(driver):
     diff = {}
     global board
-    while diff == {} or not check_dic_consistance(diff): # On analyse le board en boucle jusqu'a ce qu'il y a une différence
+    while diff == {} or not check_dic_consistance(diff) or not check_dic_not_dupplicate_move(diff):
+        # On analyse le board en boucle jusqu'a ce qu'il y a une différence
         time.sleep(0.5) # verifier qu'il y a pas le pop up de win
         if len(driver.find_elements_by_xpath('//*[@id="board-layout-chessboard"]/div[3]/div')) == 1:
             return False
