@@ -93,11 +93,10 @@ def send_move_to_opponent(driver, stock_move, is_white):
     coordonates = from_stock_move_to_cordonates(stock_move)
     source_piece_number = str(coordonates[0][0]) + str(coordonates[0][1])
     source = entire_board_elem.find_element_by_xpath(f"//*[contains(@class,'{source_piece_number}') and contains(@class,'piece')]")
-    offset_x = (coordonates[1][0] - coordonates[0][0])*72 if is_white else (coordonates[0][0] - coordonates[1][0])*72
-    offset_y = (coordonates[1][1] - coordonates[0][1])*72 if is_white else (coordonates[0][1] - coordonates[1][1])*72
+    offset_x = (coordonates[1][0] - coordonates[0][0])*144 if is_white else (coordonates[0][0] - coordonates[1][0])*144
+    offset_y = (coordonates[1][1] - coordonates[0][1])*144 if is_white else (coordonates[0][1] - coordonates[1][1])*144
     action = ActionChains(driver)
-    action.drag_and_drop_by_offset(source, offset_x, -offset_y).perform() # 72*72
-    time.sleep(0.5)
+    action.drag_and_drop_by_offset(source, offset_x, -offset_y).perform() # 144*144
 
 
 def actualiser_board(driver):
@@ -127,8 +126,8 @@ def actualiser_board(driver):
 
 
 def get_move_from_opponent(driver):
-    diff = {}
     global board
+    diff = {}
     while diff == {} or not check_dic_consistance(diff) or not check_dic_not_dupplicate_move(diff):
         # On analyse le board en boucle jusqu'a ce qu'il y a une différence
         time.sleep(0.5) # verifier qu'il y a pas le pop up de win
@@ -154,6 +153,7 @@ def get_move_from_opponent(driver):
                 return None
             if "piece" in string:
                 new_board = update_new_board_from_str(string, new_board)
+        diff = {}
         for i in range(8):
             for j in range(8):
                 if board[i][j] != new_board[i][j]:
