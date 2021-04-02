@@ -44,6 +44,14 @@ def check_dic_not_dupplicate_move(dic):
     return True
 
 
+def is_stock_move_en_passant(stock_move):
+    global board
+    if board[int(stock_move[1]) - 1][8 - reverse_board_map[stock_move[0]]][1] == 'p':
+        if stock_move[0] != stock_move[2]:
+            if board[int(stock_move[3]) - 1][8 - reverse_board_map[stock_move[2]]] == "":
+                return True
+
+
 def update_new_board_from_str(string, new_board):
     last_two = string[len(string)-2:len(string)]
     if last_two.isdigit():
@@ -93,11 +101,42 @@ def send_move_to_opponent(driver, stock_move, is_white):
     coordonates = from_stock_move_to_cordonates(stock_move)
     source_piece_number = str(coordonates[0][0]) + str(coordonates[0][1])
     source = entire_board_elem.find_element_by_xpath(f"//*[contains(@class,'{source_piece_number}') and contains(@class,'piece')]")
-    offset_x = (coordonates[1][0] - coordonates[0][0])*144 if is_white else (coordonates[0][0] - coordonates[1][0])*144
-    offset_y = (coordonates[1][1] - coordonates[0][1])*144 if is_white else (coordonates[0][1] - coordonates[1][1])*144
+    offset_x = (coordonates[1][0] - coordonates[0][0])*72 if is_white else (coordonates[0][0] - coordonates[1][0])*72
+    offset_y = (coordonates[1][1] - coordonates[0][1])*72 if is_white else (coordonates[0][1] - coordonates[1][1])*72
     action = ActionChains(driver)
-    action.drag_and_drop_by_offset(source, offset_x, -offset_y).perform() # 144*144
+    action.drag_and_drop_by_offset(source, offset_x, -offset_y).perform() # 72*72
 
+def actualiser_board2(stock_move):
+    global board
+    # ... prise en passant
+    if stock_move == "e1g1":
+        board[0][0] = ""
+        board[0][1] = "wk"
+        board[0][2] = "wr"
+        board[0][3] = ""
+    elif stock_move == "e8g8":
+        board[7][0] = ""
+        board[7][1] = "bk"
+        board[7][2] = "br"
+        board[7][3] = ""
+    elif stock_move == "e1c1":
+        board[0][3] = ""
+        board[0][4] = "wr"
+        board[0][5] = "wk"
+        board[0][7] = ""
+    elif stock_move == "e8c8":
+        board[7][3] = ""
+        board[7][4] = "br"
+        board[7][5] = "bk"
+        board[7][7] = ""
+    elif len(stock_move) == 4:
+        if is_stock_move_en_passant(stock_move):
+            board[int(stock_move[1]) - 1][8 - reverse_board_map[stock_move[2]]] = ""
+        board[int(stock_move[3]) - 1][8 - reverse_board_map[stock_move[2]]] = board[int(stock_move[1]) - 1][8 - reverse_board_map[stock_move[0]]]
+        board[int(stock_move[1]) - 1][8 - reverse_board_map[stock_move[0]]] = ""
+    else:
+        board[int(stock_move[3]) - 1][8 - reverse_board_map[stock_move[2]]] = board[int(stock_move[1]) - 1][8 - reverse_board_map[stock_move[0]]][0] + stock_move[len(stock_move) - 1]
+        board[int(stock_move[1]) - 1][8 - reverse_board_map[stock_move[0]]] = ""
 
 def actualiser_board(driver):
     entire_board_elem = driver.find_element_by_xpath('//*[@id="board-layout-chessboard"]')
@@ -114,10 +153,10 @@ def actualiser_board(driver):
         ["", "", "", "", "", "", "", ""]
     ]
     for piece in div_pieces:
-        try:
-            string = piece.get_attribute("class")
-        except:
-            return False
+        # try:
+        string = piece.get_attribute("class")
+        # except:
+        #     return False
         if "piece" in string:
             new_board = update_new_board_from_str(string, new_board)
     global board
@@ -209,7 +248,7 @@ def create_driver(url, language):
     return driver
 
 def login(driver):
-    driver.find_element_by_xpath('//*[@id="username"]').send_keys("chassefaire.thibault3@gmail.com") # 2/3/4
+    driver.find_element_by_xpath('//*[@id="username"]').send_keys("chassefaire.thibault0@gmail.com") # 3/0
     driver.find_element_by_xpath('//*[@id="password"]').send_keys("TEAM1777")
     driver.find_element_by_xpath('//*[@id="login"]').click()
     time.sleep(2)
@@ -275,13 +314,14 @@ while game_in_process:
     # print_board()
     # stock_move = stockfish.get_best_move_time(6000 + random.random()*2000)
     stock_move = stockfish.get_best_move()
-    if len(position) > 14 and len(position) < 48:
-        time.sleep(int(random.random()*7))
+    if len(position) > 14 and len(position) < 56:
+        time.sleep(int(random.random()*9))
     print("les meilleur move est : " + stock_move)
     position.append(stock_move)
     send_move_to_opponent(driver, stock_move, is_white)
-    while not actualiser_board(driver):
-        pass
+    actualiser_board2(stock_move)
+    # while not actualiser_board(driver):
+    #     pass
     stockfish.set_position(position)
     # print_board()
     move = None
