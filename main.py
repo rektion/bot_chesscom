@@ -28,11 +28,17 @@ def print_board():
 
 
 def check_dic_consistance(dic):
+    clefs = list(dic.keys())
     sum = 0
+    sum_ones = 0
     for key in dic:
         if len(dic[key]) == 3:
             return False
+        if len(dic[key]) == 1:
+            sum_ones += 1
         sum += len(dic[key])
+    if sum_ones == len(clefs) and "wp" not in clefs and "bp" not in clefs:
+        return False
     return sum != 1
 
 
@@ -106,9 +112,8 @@ def send_move_to_opponent(driver, stock_move, is_white):
     action = ActionChains(driver)
     action.drag_and_drop_by_offset(source, offset_x, -offset_y).perform() # 72*72
 
-def actualiser_board2(stock_move):
+def actualiser_board(stock_move):
     global board
-    # ... prise en passant
     if stock_move == "e1g1":
         board[0][0] = ""
         board[0][1] = "wk"
@@ -137,31 +142,6 @@ def actualiser_board2(stock_move):
     else:
         board[int(stock_move[3]) - 1][8 - reverse_board_map[stock_move[2]]] = board[int(stock_move[1]) - 1][8 - reverse_board_map[stock_move[0]]][0] + stock_move[len(stock_move) - 1]
         board[int(stock_move[1]) - 1][8 - reverse_board_map[stock_move[0]]] = ""
-
-def actualiser_board(driver):
-    entire_board_elem = driver.find_element_by_xpath('//*[@id="board-layout-chessboard"]')
-    entire_board_elem = entire_board_elem.find_element_by_tag_name('chess-board')
-    div_pieces = entire_board_elem.find_elements_by_xpath('.//*')
-    new_board = [
-        ["", "", "", "", "", "", "", ""],
-        ["", "", "", "", "", "", "", ""],
-        ["", "", "", "", "", "", "", ""],
-        ["", "", "", "", "", "", "", ""],
-        ["", "", "", "", "", "", "", ""],
-        ["", "", "", "", "", "", "", ""],
-        ["", "", "", "", "", "", "", ""],
-        ["", "", "", "", "", "", "", ""]
-    ]
-    for piece in div_pieces:
-        # try:
-        string = piece.get_attribute("class")
-        # except:
-        #     return False
-        if "piece" in string:
-            new_board = update_new_board_from_str(string, new_board)
-    global board
-    board = new_board
-    return True
 
 
 def get_move_from_opponent(driver):
@@ -248,7 +228,7 @@ def create_driver(url, language):
     return driver
 
 def login(driver):
-    driver.find_element_by_xpath('//*[@id="username"]').send_keys("chassefaire.thibault0@gmail.com") # 3/0
+    driver.find_element_by_xpath('//*[@id="username"]').send_keys("chassefaire.thibault3@gmail.com") # 3/0
     driver.find_element_by_xpath('//*[@id="password"]').send_keys("TEAM1777")
     driver.find_element_by_xpath('//*[@id="login"]').click()
     time.sleep(2)
@@ -278,7 +258,7 @@ def lunch_game(driver):
             new_game = driver.find_elements_by_xpath('//*[@id="board-layout-sidebar"]/div/div[2]/div/div[3]/div[1]/button[2]')
     new_game[0].click()
     clock_str = driver.find_element_by_xpath('//*[@id="board-layout-player-top"]/div/div[2]/div/a[1]').text
-    time.sleep(3)
+    time.sleep(5)
     while clock_str == "Adversaire":
         time.sleep(1)
         clock_str = driver.find_element_by_xpath('//*[@id="board-layout-player-top"]/div/div[2]/div/a[1]').text
@@ -294,7 +274,7 @@ def lunch_game(driver):
     return driver, is_white
 
 
-stockfish = Stockfish("stockfish_x86-64-bmi2.exe", parameters={"Threads": 8, "Ponder": "true", "Skill Level": 7, "Hash": 512})
+stockfish = Stockfish("stockfish_x86-64-bmi2.exe", parameters={"Threads": 8, "Ponder": "true", "Skill Level": 9, "Hash": 2048})
 stockfish.set_depth(20)
 driver = create_driver("https://www.chess.com/login_and_go", "en")
 driver = login(driver)
@@ -311,7 +291,6 @@ if not is_white:
     position.append(move)
     stockfish.set_position(position) # entrée si noir 
 while game_in_process:
-    # print_board()
     # stock_move = stockfish.get_best_move_time(6000 + random.random()*2000)
     stock_move = stockfish.get_best_move()
     if len(position) > 14 and len(position) < 56:
@@ -319,11 +298,8 @@ while game_in_process:
     print("les meilleur move est : " + stock_move)
     position.append(stock_move)
     send_move_to_opponent(driver, stock_move, is_white)
-    actualiser_board2(stock_move)
-    # while not actualiser_board(driver):
-    #     pass
+    actualiser_board(stock_move)
     stockfish.set_position(position)
-    # print_board()
     move = None
     while move == None:
         move = get_move_from_opponent(driver)
